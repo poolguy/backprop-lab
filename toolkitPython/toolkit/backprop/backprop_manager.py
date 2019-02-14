@@ -1,41 +1,17 @@
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 
-from toolkitPython.toolkit.backprop.backprop_learner import BackpropLearner
-from toolkitPython.toolkit.supervised_learner import SupervisedLearner
-from toolkitPython.toolkit.baseline_learner import BaselineLearner
-from toolkitPython.toolkit.matrix import Matrix
 import random
 import argparse
 import time
 
+from toolkitPython.toolkit.backprop.backprop_learner import BackpropLearner
+from toolkitPython.toolkit.baseline_learner import BaselineLearner
+from toolkitPython.toolkit.matrix import Matrix
 
-class MLSystemManager:
 
-    def get_learner(self, model):
-        """
-        Get an instance of a learner for the given model name.
+class BackpropManager:
 
-        To use toolkitPython as external package, you can extend this class (MLSystemManager)
-        with your own custom class located outside of this package, and override this method
-        to return your custom learners.
-
-        :type model: str
-        :rtype: SupervisedLearner
-        """
-        modelmap = {
-            "backprop": BackpropLearner(),
-            "baseline": BaselineLearner(),
-            #"perceptron": PerceptronLearner(),
-            #"neuralnet": NeuralNetLearner(),
-            #"decisiontree": DecisionTreeLearner(),
-            #"knn": InstanceBasedLearner()
-        }
-        if model in modelmap:
-            return modelmap[model]
-        else:
-            raise Exception("Unrecognized model: {}".format(model))
-
-    def main(self, file_name="", learner_name="", eval_method="", eval_parameter="", normalize="", seed=0):
+    def main(self, learner, file_name="", eval_method="", eval_parameter="", normalize="", seed=0):
         # parse the command-line arguments
         try:
             args = self.parser().parse_args()
@@ -48,9 +24,6 @@ class MLSystemManager:
             random.seed(args.seed)
         except:
             random.seed(seed) # Use a seed for deterministic results, if provided (makes debugging easier)
-
-        # load the model
-        learner = self.get_learner(learner_name)
 
         # load the ARFF file
         data = Matrix()
@@ -207,4 +180,5 @@ class MLSystemManager:
 
 
 if __name__ == '__main__':
-    MLSystemManager().main()
+    # todo: create learner instance with specified layers and nodes n' shit
+    BackpropManager().main()
