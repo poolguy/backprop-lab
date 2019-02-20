@@ -22,14 +22,14 @@ class BackpropLearner(SupervisedLearner):
         self.n_output_nodes = n_output_nodes
         self.layers = []
 
-    def init_network(self, n_inputs):
+    def init_network(self, n_inputs, output_class_dict):
         # first hidden layer (needs to be initialized with number of weights equal to inputs
         self.layers.append(Layer(self.n_hidden_nodes, n_inputs+1))
         # additional hidden layers
         for i in range(1, self.n_hidden_layers):
             self.layers.append(Layer(self.n_hidden_nodes, self.n_hidden_nodes+1))
         # output layer
-        self.layers.append(OutputLayer(self.n_output_nodes, self.n_hidden_nodes+1))
+        self.layers.append(OutputLayer(self.n_output_nodes, self.n_hidden_nodes+1, output_class_dict))
 
     def add_bias_if_necessary(self, row):
         if len(row) != self.len_with_bias:
@@ -37,7 +37,7 @@ class BackpropLearner(SupervisedLearner):
 
     def train(self, features, labels):
         # initialize network
-        self.init_network(features.cols)
+        self.init_network(features.cols, labels.enum_to_str[0])
         self.len_with_bias = len(features.data[0]) + 1
 
         # for each row of data, train the network all the way through, and propagate the error
@@ -51,6 +51,8 @@ class BackpropLearner(SupervisedLearner):
                 layer.set_inputs(inputs)
                 outputs = layer.get_outputs()
                 inputs = outputs
+
+
 
             # error moves backward through the network
 

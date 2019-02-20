@@ -22,12 +22,12 @@ class Layer:
         return np.array(outputs)
 
 class OutputLayer(Layer):
-    def __init__(self, n_nodes, n_weights):
+    def __init__(self, n_nodes, n_weights, output_class_dict):
         # todo: verify there is no problem here with call to super
-        super().__init__(n_nodes, n_weights)
+        super().__init__(0, 0)
         self.nodes = []
         for i in range(n_nodes):
-            self.nodes.append(OutputNode(n_weights))
+            self.nodes.append(OutputNode(n_weights, output_class_dict[i]))
 
 # class representing a node
 # Note: the node class contains all incoming weights to the node, not outgoing weights
@@ -105,6 +105,10 @@ class BiasNode(Node):
 
 
 class OutputNode(Node):
+    def __init__(self, n_weights, output_class):
+        super().__init__(n_weights)
+        self.output_class = output_class
+
     # todo: net on output nodes?
     def get_delta(self, target):
         return
