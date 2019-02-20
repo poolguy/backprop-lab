@@ -13,6 +13,22 @@ class Layer:
     def set_inputs(self, inputs):
         self.inputs = inputs
 
+    # returns np array of outputs from the layer
+    def get_outputs(self):
+        outputs = []
+        for node in self.nodes:
+            node.set_inputs(self.inputs)
+            outputs.append(node.get_output())
+        return np.array(outputs)
+
+class OutputLayer(Layer):
+    def __init__(self, n_nodes, n_weights):
+        # todo: verify there is no problem here with call to super
+        super().__init__(n_nodes, n_weights)
+        self.nodes = []
+        for i in range(n_nodes):
+            self.nodes.append(OutputNode(n_weights))
+
 # class representing a node
 # Note: the node class contains all incoming weights to the node, not outgoing weights
 class Node:
@@ -23,12 +39,14 @@ class Node:
         self.delta = None
         self.inputs = None
 
+    # Forward: 1
     def set_inputs(self, inputs):
         self.inputs = inputs
 
     def get_inputs(self):
         return self.inputs
 
+    # Forward: 2a
     # gets or computes the output
     def get_output(self):
         if self.output is not None:
@@ -36,6 +54,7 @@ class Node:
         else:
             return self.sigmoid(self.get_net())
 
+    # Forward: 2b
     # gets or computes the net value for the node
     def get_net(self):
         if self.net is not None:
@@ -43,16 +62,19 @@ class Node:
         else:
             return self.compute_net()
 
+    # Forward: 2c
     # computes net
     def compute_net(self):
         return np.dot(self.weights, self.inputs)
 
+    # Backward:
     # gets or computes delta for the node
     def get_delta(self, deltas_and_weights):
         if self.delta is not None:
             return self.delta
         else:
             return self.compute_delta(deltas_and_weights)
+
 
     # args:
     ## deltas_and_weights:
@@ -83,14 +105,6 @@ class BiasNode(Node):
 
 
 class OutputNode(Node):
-
-    def get_output(self):
-        return np.dot(self.weights, self.inputs)
-
     # todo: net on output nodes?
     def get_delta(self, target):
         return
-
-
-class OutputLayer:
-    pass

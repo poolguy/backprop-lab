@@ -23,7 +23,7 @@ class MLSystemManager:
         :rtype: SupervisedLearner
         """
         modelmap = {
-            "backprop": BackpropLearner(),
+            "backprop": BackpropLearner(4, 6, 3),
             "baseline": BaselineLearner(),
             #"perceptron": PerceptronLearner(),
             #"neuralnet": NeuralNetLearner(),
@@ -35,7 +35,7 @@ class MLSystemManager:
         else:
             raise Exception("Unrecognized model: {}".format(model))
 
-    def main(self, file_name="", learner_name="", eval_method="", eval_parameter="", normalize="", seed=0):
+    def main(self, file_name="", learner_name="", eval_method="", eval_parameter="", normalize=False, seed=0):
         # parse the command-line arguments
         try:
             args = self.parser().parse_args()
@@ -207,4 +207,4 @@ class MLSystemManager:
 
 
 if __name__ == '__main__':
-    MLSystemManager().main()
+    MLSystemManager().main("../datasets/iris.arff", "backprop", "cross", "4", False)
