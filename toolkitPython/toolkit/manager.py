@@ -22,8 +22,9 @@ class MLSystemManager:
         :type model: str
         :rtype: SupervisedLearner
         """
+        # alpha of .9 is typical, experiment with lr
         modelmap = {
-            "backprop": BackpropLearner(4, 6, 3),
+            "backprop": BackpropLearner(4, 6, 3, .03, .9),
             "baseline": BaselineLearner(),
             #"perceptron": PerceptronLearner(),
             #"neuralnet": NeuralNetLearner(),
