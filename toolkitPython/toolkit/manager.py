@@ -24,7 +24,7 @@ class MLSystemManager:
         """
         # alpha of .9 is typical, experiment with lr
         modelmap = {
-            "backprop": BackpropLearner(4, 6, 3, .03, .9),
+            "backprop": BackpropLearner(2, 2, 2, .1, 0),
             "baseline": BaselineLearner(),
             #"perceptron": PerceptronLearner(),
             #"neuralnet": NeuralNetLearner(),
@@ -36,7 +36,7 @@ class MLSystemManager:
         else:
             raise Exception("Unrecognized model: {}".format(model))
 
-    def main(self, file_name="", learner_name="", eval_method="", eval_parameter="", normalize=False, seed=0):
+    def main(self, file_name="", learner_name="", eval_method="", eval_parameter="", normalize=False, seed=0, print_confusion_matrix=False):
         # parse the command-line arguments
         try:
             args = self.parser().parse_args()
@@ -71,8 +71,8 @@ class MLSystemManager:
 
             print("Calculating accuracy on training set...")
 
-            features = Matrix(data, 0, 0, data.rows, data.cols-1)
-            labels = Matrix(data, 0, data.cols-1, data.rows, 1)
+            features = Matrix(data, 0, 0, data.rows, data.cols-2)
+            labels = Matrix(data, 0, data.cols-2, data.rows, 2)
             confusion = Matrix()
             start_time = time.time()
             learner.train(features, labels)
@@ -208,4 +208,4 @@ class MLSystemManager:
 
 
 if __name__ == '__main__':
-    MLSystemManager().main("../datasets/iris.arff", "backprop", "cross", "4", False)
+    MLSystemManager().main("../datasets/neural_net_test.arff", "backprop", "training", "4", False)

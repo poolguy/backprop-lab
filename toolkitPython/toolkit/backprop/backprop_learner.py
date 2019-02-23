@@ -17,6 +17,7 @@ from toolkitPython.toolkit.supervised_learner import SupervisedLearner
 
 class BackpropLearner(SupervisedLearner):
     def __init__(self, n_hidden_layers, n_hidden_nodes, n_output_nodes, lr, alpha):
+        self.final_labels = []
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_nodes = n_hidden_nodes
         self.n_output_nodes = n_output_nodes
@@ -37,45 +38,124 @@ class BackpropLearner(SupervisedLearner):
         if len(row) != self.len_with_bias:
             row.append(1)
 
-    # todo: stopping criteria
+    # todo: stopping criteria, predict, measure_accuracy?
 
     def train(self, features, labels):
         # initialize network
+        self.target_class_dict = labels.str_to_enum[0]
         self.init_network(features.cols, labels.enum_to_str[0])
+        self.init_weights_for_test()
         self.len_with_bias = len(features.data[0]) + 1
+        self.training = True
 
-        # for each row of data, train the network all the way through, and propagate the error
-        for i, row in enumerate(features.data):
-            # initialize input row
-            self.add_bias_if_necessary(row)
-            inputs = np.array(row)
+        ## Stopping criteria management
+        best_accuracy = 0
+        n_epochs = 0
+        n_epochs_without_improvement = 0
+        while n_epochs < 3:
+            n_epochs += 1
+            features.shuffle(labels)
 
+            # todo: Before each pattern presentation, print the weights
+            self.print_weights()
+
+            # for each row of data, train the network all the way through, and propagate the error
+            for i, row in enumerate(features.data):
+                # initialize input row
+                self.add_bias_if_necessary(row)
+                inputs = np.array(row)
+
+                # input moves forward through the network
+                for layer in self.layers:
+                    layer.set_inputs(inputs)
+                    outputs = layer.get_outputs()
+                    inputs = outputs
+
+                # todo: After you forward-propagate the input vector, print the predicted output vector
+                print("Predicted Output: ", outputs)
+
+                # error moves backward through the network, updating weights as it goes
+                try:
+                    target = labels.enum_to_str[0][labels.data[i][0]]
+                except:
+                    target = labels.data[i]
+                for layer in reversed(self.layers):
+                    # update weights
+                    if type(layer) is OutputLayer:
+                        deltas, weights = layer.update_weights_and_get_deltas_and_weights_o(target, self.lr, self.alpha)
+                    else:
+                        deltas, weights = layer.update_weights_and_get_deltas_and_weights(deltas, weights, self.lr, self.alpha)
+
+                # todo: print the error values assigned to each network unit
+                self.print_errors()
+
+                # kinda lazy, but simple solution to removing lingering member variables within the network
+                for layer in self.layers:
+                    layer.scrub_lingering_member_variables()
+
+
+            ## Stopping criteria management
+            # Track if accuracy has improved
+            # accuracy = self.measure_accuracy(features, labels)
+            # if accuracy > best_accuracy:
+            #     best_accuracy = accuracy
+            #     self.best_network = self.layers
+            #     n_epochs_without_improvement = 0
+            # else:
+            #     n_epochs_without_improvement += 1
+
+        self.training = False
+        self.measure_accuracy(features,labels)
+
+        print(self.final_labels)
+
+
+    def predict(self, features, labels):
+        del labels[:]
+
+        # initialize input row
+        self.add_bias_if_necessary(features)
+        inputs = np.array(features)
+
+        if self.training:
             # input moves forward through the network
             for layer in self.layers:
-                # todo: may wish to rethink how to handle inputs and outputs
                 layer.set_inputs(inputs)
                 outputs = layer.get_outputs()
                 inputs = outputs
 
-            # error moves backward through the network, updating weights as it goes
-            target_class = labels.enum_to_str[0][labels.data[i][0]]
-            for layer in reversed(self.layers):
-                # update weights
-                if type(layer) is OutputLayer:
-                    deltas, weights = layer.update_weights_and_get_deltas_and_weights_o(target_class, self.lr, self.alpha)
-                else:
-                    deltas, weights = layer.update_weights_and_get_deltas_and_weights(deltas, weights, self.lr, self.alpha)
+            prediction = layer.get_prediction()
 
-            # kinda lazy, but simple solution to removing lingering member variables
-            for layer in self.layers:
-                layer.scrub_lingering_member_variables()
+            labels.append(self.target_class_dict[prediction])
 
+        else:
+            # input moves forward through the network
+            for layer in self.best_network:
+                layer.set_inputs(inputs)
+                outputs = layer.get_outputs()
+                inputs = outputs
 
-    def predict(self, features, labels):
-        pass
+            prediction = layer.get_prediction()
 
-    def measure_accuracy(self, features, labels, confusion=None):
-        return super().measure_accuracy(features, labels, confusion)
+            labels.append(self.target_class_dict[prediction])
+            self.final_labels.append(self.target_class_dict[prediction])
 
+    def init_weights_for_test(self):
+        self.layers[0].nodes[0].weights = np.array([.2,-.1,.1])
+        self.layers[0].nodes[1].weights = np.array([.3,-.3,-.2])
+        self.layers[1].nodes[0].weights = np.array([-.2,-.3,.1])
+        self.layers[1].nodes[1].weights = np.array([-.1,.3,.2])
+        self.layers[2].nodes[0].weights = np.array([-.1,.3,.2])
+        self.layers[2].nodes[1].weights = np.array([-.2,-.3,.1])
 
+    def print_weights(self):
+        print("Weights:")
+        for layer in self.layers:
+            for node in layer.nodes:
+                print("\t", node.weights)
 
+    def print_errors(self):
+        print("Error Values:")
+        for layer in self.layers:
+            for node in layer.nodes:
+                print("\t", node.delta)

@@ -25,11 +25,12 @@ class Layer:
         deltas = []
         weights = []
         for i, node in enumerate(self.nodes):
-            jk_weights = np.array(k_weights)[:,i]
-            deltas.append(node.compute_and_get_delta(k_deltas, jk_weights))
-            weights.append(node.weights)
-            # after delta has been computed for the node, update the weights
-            node.update_weights(lr, alpha)
+            if type(node) != BiasNode:
+                jk_weights = np.array(k_weights)[:,i]
+                deltas.append(node.compute_and_get_delta(k_deltas, jk_weights))
+                weights.append(node.weights)
+                # after delta has been computed for the node, update the incoming weights for the node
+                node.update_weights(lr, alpha)
 
         return deltas, weights
 
@@ -43,24 +44,43 @@ class OutputLayer(Layer):
         super().__init__(0, 0)
         self.nodes = []
         for i in range(n_nodes):
-            self.nodes.append(OutputNode(n_weights, output_class_dict[i]))
+            if len(output_class_dict) != 0:
+                self.nodes.append(OutputNode(n_weights, output_class_dict[i]))
+            else:
+                self.nodes.append(OutputNode(n_weights))
 
-    def update_weights_and_get_deltas_and_weights_o(self, target_class, lr, alpha):
+    def update_weights_and_get_deltas_and_weights_o(self, target, lr, alpha):
         deltas = []
         weights = []
-        for node in self.nodes:
-            deltas.append(node.compute_and_get_delta_o(target_class))
+        for i, node in enumerate(self.nodes):
+            # this handles continuous targets vs categorical targets
+            try:
+                t = target[i] # continuous
+            except:
+                t = target # categorical
+
+            deltas.append(node.compute_and_get_delta_o(t))
             weights.append(node.weights)
             # after delta has been computed for the node, update the weights
             node.update_weights(lr, alpha)
 
         return deltas, weights
 
+    def get_prediction(self):
+        p_node = None
+        strongest_confidence = 0
+        for node in self.nodes:
+            if node.output > strongest_confidence:
+                strongest_confidence = node.output
+                p_node = node
+
+        return p_node.output_class
+
 # class representing a node
 # Note: the node class contains all incoming weights to the node, not outgoing weights
 class Node:
     def __init__(self, n_weights):
-        self.weights = np.random.uniform(-1,1,size=n_weights)
+        self.weights = np.random.uniform(-.5,.5,size=n_weights)
         self.previous_updates = np.zeros(shape=self.weights.shape) # this is for momentum
         self.output = None
         self.net = None
@@ -75,14 +95,14 @@ class Node:
         return self.inputs
 
     # Forward: 2a
-    # gets or computes the output todo:
+    # gets or computes the output
     def get_output(self):
         if self.output is None:
             self.output = self.sigmoid(self.get_net())
         return self.output
 
     # Forward: 2b
-    # gets or computes the net value for the node todo:
+    # gets or computes the net value for the node
     def get_net(self):
         if self.net is None:
             self.net = self.compute_net()
@@ -109,7 +129,8 @@ class Node:
         for i in range(len(deltas)):
             d = deltas[i]
             w = weights[i]
-            self.delta += d * w * self.dx_sigmoid(self.get_net())
+            self.delta += d * w
+        self.delta = self.delta * self.dx_sigmoid(self.get_net())
         return self.delta
 
     # updates the weights of the node. Called after delta has been computed.
@@ -142,22 +163,28 @@ class Node:
 
 
 class BiasNode(Node):
+    def __init__(self, n_weights):
+        super().__init__(n_weights)
+        self.weights = None
+        self.previous_updates = None
+
     def get_output(self):
         return 1
 
 
 class OutputNode(Node):
-    def __init__(self, n_weights, output_class):
+    def __init__(self, n_weights, output_class=None):
         super().__init__(n_weights)
         self.output_class = output_class
 
-    def compute_and_get_delta_o(self, target_class):
-        target = self.enumerate_target_class(target_class)
+    def compute_and_get_delta_o(self, target):
+        if isinstance(target, str):
+            target = self.enumerate_target_class(target)
         self.delta = (target - self.get_output()) * self.dx_sigmoid(self.get_net())
         return self.delta
 
-    def enumerate_target_class(self, target_class):
-        if target_class == self.output_class:
+    def enumerate_target_class(self, target):
+        if target == self.output_class:
             return 1
         else:
             return 0
