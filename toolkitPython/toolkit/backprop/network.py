@@ -33,9 +33,13 @@ class Layer:
 
         return deltas, weights
 
+    # This is called after a full forward pass of the network, and subsequent backpropagation of the error
+    def scrub_lingering_member_variables(self):
+        for node in self.nodes:
+            node.scrub_lingering_member_variables()
+
 class OutputLayer(Layer):
     def __init__(self, n_nodes, n_weights, output_class_dict):
-        # todo: verify there is no problem here with call to super
         super().__init__(0, 0)
         self.nodes = []
         for i in range(n_nodes):
@@ -129,6 +133,12 @@ class Node:
 
     def dx_sigmoid(self, net):
         return self.sigmoid(net)*(1 - self.sigmoid(net))
+
+    # This is called after a full forward pass of the network, and subsequent backpropagation of the error
+    def scrub_lingering_member_variables(self):
+        self.output = None
+        self.net = None
+        self.delta = None
 
 
 class BiasNode(Node):

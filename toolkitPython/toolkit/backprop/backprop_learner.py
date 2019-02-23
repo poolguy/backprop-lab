@@ -66,6 +66,10 @@ class BackpropLearner(SupervisedLearner):
                 else:
                     deltas, weights = layer.update_weights_and_get_deltas_and_weights(deltas, weights, self.lr, self.alpha)
 
+            # kinda lazy, but simple solution to removing lingering member variables
+            for layer in self.layers:
+                layer.scrub_lingering_member_variables()
+
 
     def predict(self, features, labels):
         pass
