@@ -52,6 +52,7 @@ class OutputLayer(Layer):
     def update_weights_and_get_deltas_and_weights_o(self, target, lr, alpha):
         deltas = []
         weights = []
+        # self.round_outputs()
         for i, node in enumerate(self.nodes):
             # this handles continuous targets vs categorical targets
             try:
@@ -66,6 +67,21 @@ class OutputLayer(Layer):
 
         return deltas, weights
 
+    def round_outputs(self):
+        largest = 0
+        largest_idx = None
+        for i, node in enumerate(self.nodes):
+            if node.output > largest:
+                largest = node.output
+                largest_idx = i
+
+        for i, node in enumerate(self.nodes):
+            if i == largest_idx:
+                node.output = 1
+            else:
+                node.output = 0
+
+    # todo: maybe remove
     def get_prediction(self):
         p_node = None
         strongest_confidence = 0

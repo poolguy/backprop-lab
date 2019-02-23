@@ -24,7 +24,7 @@ class MLSystemManager:
         """
         # alpha of .9 is typical, experiment with lr
         modelmap = {
-            "backprop": BackpropLearner(2, 2, 2, .1, 0),
+            "backprop": BackpropLearner(1, 8, 3, .1, 0),
             "baseline": BaselineLearner(),
             #"perceptron": PerceptronLearner(),
             #"neuralnet": NeuralNetLearner(),
@@ -71,14 +71,14 @@ class MLSystemManager:
 
             print("Calculating accuracy on training set...")
 
-            features = Matrix(data, 0, 0, data.rows, data.cols-2)
-            labels = Matrix(data, 0, data.cols-2, data.rows, 2)
+            features = Matrix(data, 0, 0, data.rows, data.cols-1)
+            labels = Matrix(data, 0, data.cols-1, data.rows, 1)
             confusion = Matrix()
             start_time = time.time()
             learner.train(features, labels)
             elapsed_time = time.time() - start_time
             print("Time to train (in seconds): {}".format(elapsed_time))
-            accuracy = learner.measure_accuracy(features, labels, confusion)
+            accuracy = learner.measure_accuracy(features, labels)
             print("Training set accuracy: " + str(accuracy))
 
             if print_confusion_matrix:
@@ -208,4 +208,4 @@ class MLSystemManager:
 
 
 if __name__ == '__main__':
-    MLSystemManager().main("../datasets/neural_net_test.arff", "backprop", "training", "4", False)
+    MLSystemManager().main("../datasets/iris.arff", "backprop", "training", "4", False)

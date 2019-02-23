@@ -39,12 +39,12 @@ class BackpropLearner(SupervisedLearner):
             row.append(1)
 
     # todo: stopping criteria, predict, measure_accuracy?
-
     def train(self, features, labels):
         # initialize network
         self.target_class_dict = labels.str_to_enum[0]
         self.init_network(features.cols, labels.enum_to_str[0])
-        self.init_weights_for_test()
+        # todo remove test: init weights for test
+        # self.init_weights_for_test()
         self.len_with_bias = len(features.data[0]) + 1
         self.training = True
 
@@ -52,12 +52,12 @@ class BackpropLearner(SupervisedLearner):
         best_accuracy = 0
         n_epochs = 0
         n_epochs_without_improvement = 0
-        while n_epochs < 3:
+        while n_epochs_without_improvement < 5:
             n_epochs += 1
             features.shuffle(labels)
 
-            # todo: Before each pattern presentation, print the weights
-            self.print_weights()
+            # todo remove test: Before each pattern presentation, print the weights
+            # self.print_weights()
 
             # for each row of data, train the network all the way through, and propagate the error
             for i, row in enumerate(features.data):
@@ -71,14 +71,18 @@ class BackpropLearner(SupervisedLearner):
                     outputs = layer.get_outputs()
                     inputs = outputs
 
-                # todo: After you forward-propagate the input vector, print the predicted output vector
-                print("Predicted Output: ", outputs)
+                # todo remove test: After you forward-propagate the input vector, print the predicted output vector
+                # print("Predicted Output: ", outputs)
 
-                # error moves backward through the network, updating weights as it goes
+                outputs = self.round_outputs(outputs)
+
                 try:
-                    target = labels.enum_to_str[0][labels.data[i][0]]
+                    # target = np.zeros(shape=self.n_output_nodes) # categorical targets
+                    # target[int(labels.data[i][0])] = 1
+                    target = labels.enum_to_str[0][int(labels.data[i][0])]
                 except:
-                    target = labels.data[i]
+                    target = labels.data[i] # continuous targets
+                # error moves backward through the network, updating weights as it goes
                 for layer in reversed(self.layers):
                     # update weights
                     if type(layer) is OutputLayer:
@@ -86,8 +90,8 @@ class BackpropLearner(SupervisedLearner):
                     else:
                         deltas, weights = layer.update_weights_and_get_deltas_and_weights(deltas, weights, self.lr, self.alpha)
 
-                # todo: print the error values assigned to each network unit
-                self.print_errors()
+                # todo remove test: print the error values assigned to each network unit
+                # self.print_errors()
 
                 # kinda lazy, but simple solution to removing lingering member variables within the network
                 for layer in self.layers:
@@ -96,13 +100,13 @@ class BackpropLearner(SupervisedLearner):
 
             ## Stopping criteria management
             # Track if accuracy has improved
-            # accuracy = self.measure_accuracy(features, labels)
-            # if accuracy > best_accuracy:
-            #     best_accuracy = accuracy
-            #     self.best_network = self.layers
-            #     n_epochs_without_improvement = 0
-            # else:
-            #     n_epochs_without_improvement += 1
+            accuracy = self.measure_accuracy(features, labels)
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                self.best_network = self.layers
+                n_epochs_without_improvement = 0
+            else:
+                n_epochs_without_improvement += 1
 
         self.training = False
         self.measure_accuracy(features,labels)
@@ -118,27 +122,22 @@ class BackpropLearner(SupervisedLearner):
         inputs = np.array(features)
 
         if self.training:
-            # input moves forward through the network
-            for layer in self.layers:
-                layer.set_inputs(inputs)
-                outputs = layer.get_outputs()
-                inputs = outputs
-
-            prediction = layer.get_prediction()
-
-            labels.append(self.target_class_dict[prediction])
-
+            network = self.layers
         else:
-            # input moves forward through the network
-            for layer in self.best_network:
-                layer.set_inputs(inputs)
-                outputs = layer.get_outputs()
-                inputs = outputs
+            network = self.best_network
 
-            prediction = layer.get_prediction()
+        # input moves forward through the network
+        for layer in network:
+            layer.set_inputs(inputs)
+            outputs = layer.get_outputs()
+            inputs = outputs
 
-            labels.append(self.target_class_dict[prediction])
-            self.final_labels.append(self.target_class_dict[prediction])
+        prediction = self.target_class_dict[layer.get_prediction()]
+        # prediction = self.round_outputs(outputs)
+        labels.append(prediction)
+
+        if not self.training:
+            self.final_labels.append(prediction)
 
     def init_weights_for_test(self):
         self.layers[0].nodes[0].weights = np.array([.2,-.1,.1])
@@ -159,3 +158,15 @@ class BackpropLearner(SupervisedLearner):
         for layer in self.layers:
             for node in layer.nodes:
                 print("\t", node.delta)
+
+    def round_outputs(self, outputs):
+        largest = 0
+        largest_idx = None
+        for i, output in enumerate(outputs):
+            if output > largest:
+                largest = output
+                largest_idx = i
+
+        outputs = np.zeros(shape=outputs.shape)
+        outputs[largest_idx] = 1
+        return outputs
