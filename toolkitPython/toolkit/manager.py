@@ -208,4 +208,4 @@ class MLSystemManager:
 
 
 if __name__ == '__main__':
-    MLSystemManager().main("../datasets/iris.arff", "backprop", "training", "4", False)
+    MLSystemManager().main("../datasets/iris.arff", "backprop", "training", "10", False)

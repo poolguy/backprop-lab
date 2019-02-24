@@ -98,8 +98,7 @@ class BackpropLearner(SupervisedLearner):
                 #     self.print_errors()
 
                 # kinda lazy, but simple solution to removing lingering member variables within the network
-                for layer in self.layers:
-                    layer.scrub_lingering_member_variables()
+                self.scrub_network()
 
 
             ## Stopping criteria management
@@ -107,7 +106,7 @@ class BackpropLearner(SupervisedLearner):
             accuracy = self.measure_accuracy(features, labels)
             if accuracy > best_accuracy:
                 best_accuracy = accuracy
-                self.best_network = self.layers
+                self.best_network = self.layers.copy()
                 n_epochs_without_improvement = 0
             else:
                 n_epochs_without_improvement += 1
@@ -140,8 +139,9 @@ class BackpropLearner(SupervisedLearner):
         # prediction = self.round_outputs(outputs)
         labels.append(prediction)
 
-        if not self.training:
-            self.final_labels.append(prediction)
+        # if not self.training:
+        self.final_labels.append(prediction)
+        self.scrub_network()
 
     def init_weights_for_test(self):
         self.layers[0].nodes[0].weights = np.array([.2,-.1,.1])
@@ -174,3 +174,8 @@ class BackpropLearner(SupervisedLearner):
         outputs = np.zeros(shape=outputs.shape)
         outputs[largest_idx] = 1
         return outputs
+    
+    # kinda lazy, but simple solution to removing lingering member variables within the network
+    def scrub_network(self):
+        for layer in self.layers:
+            layer.scrub_lingering_member_variables()
