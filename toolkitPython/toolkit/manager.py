@@ -37,17 +37,6 @@ class MLSystemManager:
             raise Exception("Unrecognized model: {}".format(model))
 
     def main(self, file_name="", learner_name="", eval_method="", eval_parameter=1.0, normalize=False, seed=0, print_confusion_matrix=False):
-        # # parse the command-line arguments
-        # try:
-        #     args = self.parser().parse_args()
-        #     file_name = args.arff
-        #     learner_name = args.L
-        #     eval_method = args.E[0]
-        #     eval_parameter = args.E[1] if len(args.E) > 1 else None
-        #     print_confusion_matrix = args.verbose
-        #     normalize = args.normalize
-        #     random.seed(args.seed)
-        # except:
         random.seed(seed) # Use a seed for deterministic results, if provided (makes debugging easier)
 
         # load the model

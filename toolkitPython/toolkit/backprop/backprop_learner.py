@@ -38,13 +38,10 @@ class BackpropLearner(SupervisedLearner):
         if len(row) != self.len_with_bias:
             row.append(1)
 
-    # todo: stopping criteria, predict, measure_accuracy?
     def train(self, features, labels):
         # initialize network
         self.target_class_dict = labels.str_to_enum[0]
         self.init_network(features.cols, labels.enum_to_str[0])
-        # todo remove test: init weights for test
-        # self.init_weights_for_test()
         self.len_with_bias = len(features.data[0]) + 1
         self.training = True
 
@@ -58,9 +55,6 @@ class BackpropLearner(SupervisedLearner):
             n_epochs += 1
             features.shuffle(labels)
 
-            # todo remove test: Before each pattern presentation, print the weights
-            # self.print_weights()
-
             # for each row of data, train the network all the way through, and propagate the error
             for i, row in enumerate(features.data):
                 # initialize input row
@@ -72,11 +66,6 @@ class BackpropLearner(SupervisedLearner):
                     layer.set_inputs(inputs)
                     outputs = layer.get_outputs()
                     inputs = outputs
-
-                # todo remove test: After you forward-propagate the input vector, print the predicted output vector
-                # print("Predicted Output: ", outputs)
-
-                # outputs = self.round_outputs(outputs)
 
                 try:
                     target = labels.enum_to_str[0][int(labels.data[i][0])]
@@ -90,12 +79,8 @@ class BackpropLearner(SupervisedLearner):
                     else:
                         deltas, weights = layer.update_weights_and_get_deltas_and_weights(deltas, weights, self.lr, self.alpha)
 
-                # todo remove test: print the error values assigned to each network unit
-                # self.print_errors()
-
                 # kinda lazy, but simple solution to removing lingering member variables within the network
                 self.scrub_network()
-
 
             ## Stopping criteria management
             # Track if accuracy has improved
