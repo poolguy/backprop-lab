@@ -66,6 +66,12 @@ class OutputLayer(Layer):
 
         return deltas, weights
 
+    def compute_sse(self, target):
+        e = 0
+        for node in self.nodes:
+            e += node.get_error(target)**2
+        return e
+
     def round_outputs(self):
         largest = 0
         largest_idx = None
@@ -80,7 +86,6 @@ class OutputLayer(Layer):
             else:
                 node.output = 0
 
-    # todo: maybe remove
     def get_prediction(self):
         p_node = None
         strongest_confidence = 0
@@ -193,9 +198,8 @@ class OutputNode(Node):
         self.output_class = output_class
 
     def compute_and_get_delta_o(self, target):
-        if isinstance(target, str):
-            target = self.enumerate_target_class(target)
-        self.delta = (target - self.get_output()) * self.dx_sigmoid(self.get_net())
+        error = self.get_error(target)
+        self.delta = error * self.dx_sigmoid(self.get_net())
         return self.delta
 
     def enumerate_target_class(self, target):
@@ -203,3 +207,8 @@ class OutputNode(Node):
             return 1
         else:
             return 0
+
+    def get_error(self, target):
+        if isinstance(target, str):
+            target = self.enumerate_target_class(target)
+        return target - self.get_output()

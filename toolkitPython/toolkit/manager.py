@@ -24,7 +24,7 @@ class MLSystemManager:
         """
         # alpha of .9 is typical, experiment with lr
         modelmap = {
-            "backprop": BackpropLearner(1, 8, 3, .01, .9),
+            "backprop": BackpropLearner(1, 8, 3, .05, .9),
             "baseline": BaselineLearner(),
             #"perceptron": PerceptronLearner(),
             #"neuralnet": NeuralNetLearner(),

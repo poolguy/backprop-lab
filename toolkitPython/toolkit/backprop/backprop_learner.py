@@ -24,6 +24,10 @@ class BackpropLearner(SupervisedLearner):
         self.layers = []
         self.lr = lr
         self.alpha = alpha
+        # members for reporting
+        self.train_mses = []
+        self.vs_mses = []
+        self.accuracies = []
 
     def init_network(self, n_inputs, output_class_dict):
         # first hidden layer (needs to be initialized with number of weights equal to inputs
@@ -47,14 +51,15 @@ class BackpropLearner(SupervisedLearner):
 
         ## Stopping criteria management
         best_accuracy = 0
+        best_vs_mse = math.inf
         n_epochs = 0
         n_epochs_without_improvement = 0
         # Pull out validation set
         vs_features, vs_labels = self.get_train_and_validation_set(features, labels)
-        while n_epochs_without_improvement < 15:
-            n_epochs += 1
+        while n_epochs_without_improvement < 10:
             features.shuffle(labels)
-
+            n_epochs += 1
+            train_sse = 0
             # for each row of data, train the network all the way through, and propagate the error
             for i, row in enumerate(features.data):
                 # initialize input row
@@ -71,22 +76,29 @@ class BackpropLearner(SupervisedLearner):
                     target = labels.enum_to_str[0][int(labels.data[i][0])]
                 except:
                     target = labels.data[i] # continuous targets
-                # error moves backward through the network, updating weights as it goes
+                # error propagates backward through the network, updating weights as it goes
                 for layer in reversed(self.layers):
                     # update weights
                     if type(layer) is OutputLayer:
                         deltas, weights = layer.update_weights_and_get_deltas_and_weights_o(target, self.lr, self.alpha)
+                        train_sse += layer.compute_sse(target)
                     else:
                         deltas, weights = layer.update_weights_and_get_deltas_and_weights(deltas, weights, self.lr, self.alpha)
 
                 # kinda lazy, but simple solution to removing lingering member variables within the network
                 self.scrub_network()
 
+            train_mse = train_sse/features.rows
+            self.train_mses.append(train_mse)
+
             ## Stopping criteria management
             # Track if accuracy has improved
             accuracy = self.measure_accuracy(vs_features, vs_labels)
-            if accuracy > best_accuracy:
-                best_accuracy = accuracy
+            self.accuracies.append(accuracy)
+            vs_mse = self.measure_mse(vs_features, vs_labels)
+            self.vs_mses.append(vs_mse)
+            if vs_mse < best_vs_mse:
+                best_vs_mse = vs_mse
                 self.best_network = self.layers.copy()
                 n_epochs_without_improvement = 0
             else:
@@ -96,6 +108,9 @@ class BackpropLearner(SupervisedLearner):
         self.measure_accuracy(features,labels)
 
         print(self.final_labels)
+        self.print_list("Train MSEs", self.train_mses)
+        self.print_list("VS MSEs", self.vs_mses)
+        self.print_list("Accuracies", self.accuracies)
 
 
     def predict(self, features, labels):
@@ -123,6 +138,31 @@ class BackpropLearner(SupervisedLearner):
         if not self.training:
             self.final_labels.append(prediction)
         self.scrub_network()
+
+    def measure_mse(self, features, labels):
+        sse = 0
+        for i, row in enumerate(features.data):
+            # initialize input row
+            self.add_bias_if_necessary(row)
+            inputs = np.array(row)
+
+            # input moves forward through the network
+            for layer in self.layers:
+                layer.set_inputs(inputs)
+                outputs = layer.get_outputs()
+                inputs = outputs
+
+            try:
+                target = labels.enum_to_str[0][int(labels.data[i][0])]
+            except:
+                target = labels.data[i]  # continuous targets
+
+            sse += layer.compute_sse(target)
+
+            self.scrub_network()
+
+        mse = sse/features.rows
+        return mse
 
     def init_weights_for_test(self):
         self.layers[0].nodes[0].weights = np.array([.2,-.1,.1])
@@ -173,3 +213,8 @@ class BackpropLearner(SupervisedLearner):
         vs_labels.data = list(l[::10])
         labels.data = list([list(l[i]) for i in range(len(l)) if i%10 != 0])
         return vs_features, vs_labels
+
+    def print_list(self, name, list):
+        print("\n", name)
+        for item in list:
+            print(item)
