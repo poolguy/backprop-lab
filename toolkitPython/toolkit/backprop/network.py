@@ -52,7 +52,6 @@ class OutputLayer(Layer):
     def update_weights_and_get_deltas_and_weights_o(self, target, lr, alpha):
         deltas = []
         weights = []
-        # self.round_outputs()
         for i, node in enumerate(self.nodes):
             # this handles continuous targets vs categorical targets
             if isinstance(target, str):

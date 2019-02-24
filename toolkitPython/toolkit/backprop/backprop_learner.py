@@ -52,7 +52,9 @@ class BackpropLearner(SupervisedLearner):
         best_accuracy = 0
         n_epochs = 0
         n_epochs_without_improvement = 0
-        while n_epochs_without_improvement < 5:
+        # Pull out validation set
+        vs_features, vs_labels = self.get_train_and_validation_set(features, labels)
+        while n_epochs_without_improvement < 15:
             n_epochs += 1
             features.shuffle(labels)
 
@@ -77,8 +79,6 @@ class BackpropLearner(SupervisedLearner):
                 # outputs = self.round_outputs(outputs)
 
                 try:
-                    # target = np.zeros(shape=self.n_output_nodes) # categorical targets
-                    # target[int(labels.data[i][0])] = 1
                     target = labels.enum_to_str[0][int(labels.data[i][0])]
                 except:
                     target = labels.data[i] # continuous targets
@@ -92,10 +92,6 @@ class BackpropLearner(SupervisedLearner):
 
                 # todo remove test: print the error values assigned to each network unit
                 # self.print_errors()
-                # if n_epochs_without_improvement > 98:
-                #     self.print_weights()
-                #     print("Predicted Output: ", outputs)
-                #     self.print_errors()
 
                 # kinda lazy, but simple solution to removing lingering member variables within the network
                 self.scrub_network()
@@ -103,7 +99,7 @@ class BackpropLearner(SupervisedLearner):
 
             ## Stopping criteria management
             # Track if accuracy has improved
-            accuracy = self.measure_accuracy(features, labels)
+            accuracy = self.measure_accuracy(vs_features, vs_labels)
             if accuracy > best_accuracy:
                 best_accuracy = accuracy
                 self.best_network = self.layers.copy()
@@ -139,8 +135,8 @@ class BackpropLearner(SupervisedLearner):
         # prediction = self.round_outputs(outputs)
         labels.append(prediction)
 
-        # if not self.training:
-        self.final_labels.append(prediction)
+        if not self.training:
+            self.final_labels.append(prediction)
         self.scrub_network()
 
     def init_weights_for_test(self):
@@ -174,8 +170,21 @@ class BackpropLearner(SupervisedLearner):
         outputs = np.zeros(shape=outputs.shape)
         outputs[largest_idx] = 1
         return outputs
-    
+
     # kinda lazy, but simple solution to removing lingering member variables within the network
     def scrub_network(self):
         for layer in self.layers:
             layer.scrub_lingering_member_variables()
+
+    def get_train_and_validation_set(self, features, labels):
+        vs_labels = labels.__copy__()
+        vs_features = features.__copy__()
+
+        d = features.data
+        vs_features.data = list(d[::10])
+        features.data = list([list(d[i]) for i in range(len(d)) if i%10 != 0])
+
+        l = labels.data
+        vs_labels.data = list(l[::10])
+        labels.data = list([list(l[i]) for i in range(len(l)) if i%10 != 0])
+        return vs_features, vs_labels

@@ -53,6 +53,15 @@ class Matrix:
         elif matrix:
             self.init_from(matrix, row_start, col_start, row_count, col_count)
 
+    def __copy__(self):
+        m = Matrix()
+        m.data = self.data
+        m.attr_names = self.attr_names
+        m.str_to_enum = self.str_to_enum
+        m.enum_to_str = self.enum_to_str
+        m.dataset_name = self.dataset_name
+        return m
+
     def init_from(self, matrix, row_start, col_start, row_count, col_count):
         """Initialize the matrix with a portion of another matrix"""
         self.data = [matrix.data[row][col_start:col_start+col_count] for row in range(row_start, row_start+row_count)]

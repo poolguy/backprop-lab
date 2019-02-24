@@ -75,17 +75,10 @@ class SupervisedLearner:
                 targ = int(labels.get(i, 0))
                 if targ >= label_values_count:
                     raise Exception("The label is out of range")
-
-                # encoding = np.zeros(shape=len(np.unique(np.array(labels.data))))
-                # encoding[targ] = 1
-                # targ = encoding
-
                 self.predict(feat, prediction)
-                # pred = prediction[0]
                 pred = int(prediction[0])
                 if confusion:
                     confusion.set(targ, pred, confusion.get(targ, pred)+1)
-                # if np.array_equal(pred, targ):
                 if pred == targ:
                     correct_count += 1
 
