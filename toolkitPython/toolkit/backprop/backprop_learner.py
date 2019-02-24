@@ -24,10 +24,10 @@ class BackpropLearner(SupervisedLearner):
         self.layers = []
         self.lr = lr
         self.alpha = alpha
-        # members for reporting
-        self.train_mses = []
-        self.vs_mses = []
-        self.accuracies = []
+        # members for reporting todo: from step 2
+        # self.train_mses = [] todo: from step 2
+        # self.vs_mses = [] todo: from step 2
+        # self.accuracies = [] todo: from step 2
 
     def init_network(self, n_inputs, output_class_dict):
         # first hidden layer (needs to be initialized with number of weights equal to inputs
@@ -50,7 +50,6 @@ class BackpropLearner(SupervisedLearner):
         self.training = True
 
         ## Stopping criteria management
-        best_accuracy = 0
         best_vs_mse = math.inf
         n_epochs = 0
         n_epochs_without_improvement = 0
@@ -59,7 +58,7 @@ class BackpropLearner(SupervisedLearner):
         while n_epochs_without_improvement < 10:
             features.shuffle(labels)
             n_epochs += 1
-            train_sse = 0
+            # train_sse = 0 todo: from step 2
             # for each row of data, train the network all the way through, and propagate the error
             for i, row in enumerate(features.data):
                 # initialize input row
@@ -81,22 +80,22 @@ class BackpropLearner(SupervisedLearner):
                     # update weights
                     if type(layer) is OutputLayer:
                         deltas, weights = layer.update_weights_and_get_deltas_and_weights_o(target, self.lr, self.alpha)
-                        train_sse += layer.compute_sse(target)
+                        # train_sse += layer.compute_sse(target) todo: from step 2
                     else:
                         deltas, weights = layer.update_weights_and_get_deltas_and_weights(deltas, weights, self.lr, self.alpha)
 
                 # kinda lazy, but simple solution to removing lingering member variables within the network
                 self.scrub_network()
 
-            train_mse = train_sse/features.rows
-            self.train_mses.append(train_mse)
+            # train_mse = train_sse/features.rows todo: from step 2
+            # self.train_mses.append(train_mse) todo: from step 2
+            # accuracy = self.measure_accuracy(vs_features, vs_labels) todo: from step 2
+            # self.accuracies.append(accuracy) todo: from step 2
 
             ## Stopping criteria management
-            # Track if accuracy has improved
-            accuracy = self.measure_accuracy(vs_features, vs_labels)
-            self.accuracies.append(accuracy)
+            # Track if vs_mse has improved
             vs_mse = self.measure_mse(vs_features, vs_labels)
-            self.vs_mses.append(vs_mse)
+            # self.vs_mses.append(vs_mse) todo: from step 2
             if vs_mse < best_vs_mse:
                 best_vs_mse = vs_mse
                 self.best_network = self.layers.copy()
@@ -105,12 +104,24 @@ class BackpropLearner(SupervisedLearner):
                 n_epochs_without_improvement += 1
 
         self.training = False
-        self.measure_accuracy(features,labels)
+        train_acc = self.measure_accuracy(features,labels)
 
-        print(self.final_labels)
-        self.print_list("Train MSEs", self.train_mses)
-        self.print_list("VS MSEs", self.vs_mses)
-        self.print_list("Accuracies", self.accuracies)
+        # self.print_list("Train MSEs", self.train_mses) todo: from step 2
+        # self.print_list("VS MSEs", self.vs_mses) todo: from step 2
+        # self.print_list("Accuracies", self.accuracies) todo: from step 2
+
+        # Step 3: Compute MSE for train, test, and validation
+        train_mse = self.measure_mse(features, labels)
+        test_mse = self.measure_mse(self.test_features, self.test_labels)
+        test_acc = self.measure_accuracy(self.test_features, self.test_labels)
+
+        print(self.n_hidden_layers)
+        print(train_mse)
+        print(test_mse)
+        print(vs_mse)
+        print(n_epochs)
+        print(train_acc)
+        print(test_acc)
 
 
     def predict(self, features, labels):

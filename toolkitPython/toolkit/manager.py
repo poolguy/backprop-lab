@@ -24,7 +24,8 @@ class MLSystemManager:
         """
         # alpha of .9 is typical, experiment with lr
         modelmap = {
-            "backprop": BackpropLearner(1, 8, 3, .05, .9),
+            "backprop": BackpropLearner(4, 16, 11, .05, .9),
+            # "backprop": BackpropLearner(1, 8, 3, .01, .9),
             "baseline": BaselineLearner(),
             #"perceptron": PerceptronLearner(),
             #"neuralnet": NeuralNetLearner(),
@@ -124,6 +125,8 @@ class MLSystemManager:
 
             test_features = Matrix(data, train_size, 0, data.rows - train_size, data.cols-1)
             test_labels = Matrix(data, train_size, data.cols-1, data.rows - train_size, 1)
+            learner.test_features = test_features
+            learner.test_labels = test_labels
 
             start_time = time.time()
             learner.train(train_features, train_labels)
@@ -197,4 +200,5 @@ class MLSystemManager:
 
 
 if __name__ == '__main__':
-    MLSystemManager().main("../datasets/iris.arff", "backprop", "random", .75, False)
+    MLSystemManager().main("../datasets/vowel_mod.arff", "backprop", "random", .75, False)
+    # MLSystemManager().main("../datasets/iris.arff", "backprop", "random", .75, False)
