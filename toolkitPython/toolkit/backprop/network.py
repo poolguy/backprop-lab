@@ -55,10 +55,10 @@ class OutputLayer(Layer):
         # self.round_outputs()
         for i, node in enumerate(self.nodes):
             # this handles continuous targets vs categorical targets
-            try:
-                t = target[i] # continuous
-            except:
+            if isinstance(target, str):
                 t = target # categorical
+            else:
+                t = target[i] # continuous
 
             deltas.append(node.compute_and_get_delta_o(t))
             weights.append(node.weights)
@@ -96,7 +96,7 @@ class OutputLayer(Layer):
 # Note: the node class contains all incoming weights to the node, not outgoing weights
 class Node:
     def __init__(self, n_weights):
-        self.weights = np.random.uniform(-.5,.5,size=n_weights)
+        self.weights = np.random.uniform(-1,1,size=n_weights)
         self.previous_updates = np.zeros(shape=self.weights.shape) # this is for momentum
         self.output = None
         self.net = None

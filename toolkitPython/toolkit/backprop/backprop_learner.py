@@ -74,7 +74,7 @@ class BackpropLearner(SupervisedLearner):
                 # todo remove test: After you forward-propagate the input vector, print the predicted output vector
                 # print("Predicted Output: ", outputs)
 
-                outputs = self.round_outputs(outputs)
+                # outputs = self.round_outputs(outputs)
 
                 try:
                     # target = np.zeros(shape=self.n_output_nodes) # categorical targets
@@ -92,6 +92,10 @@ class BackpropLearner(SupervisedLearner):
 
                 # todo remove test: print the error values assigned to each network unit
                 # self.print_errors()
+                # if n_epochs_without_improvement > 98:
+                #     self.print_weights()
+                #     print("Predicted Output: ", outputs)
+                #     self.print_errors()
 
                 # kinda lazy, but simple solution to removing lingering member variables within the network
                 for layer in self.layers:
